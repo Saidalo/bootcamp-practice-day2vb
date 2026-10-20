@@ -9,7 +9,11 @@ public class PaymentMethodFactory {
         return new PaypalPayment(email);
     }
 
-    public static GiftCardPayment createGiftCardPayment(String code, double balance) {
+    public static PaymentMethod createGiftCardPayment(String code, double balance) {
         return new GiftCardPayment(code, balance);
+    }
+
+    public static PaymentMethod createBankTransferPayment(String iban, String accName) {
+        return new BankTransferPayment(iban, accName);
     }
 }

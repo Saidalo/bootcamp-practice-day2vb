@@ -2,6 +2,7 @@ package org.example.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.example.config.AppConfig;
 
 public class Order {
     private final String customerName;
@@ -25,11 +26,12 @@ public class Order {
 
     public double calculateTotal(){
         double total = 0.0d;
+        double taxRate = AppConfig.getInstance().getTaxRate();
         for (OrderItem item: items) {
             total += item.calculateTotal();
         }
 
-        return discount.apply(total);
+        return discount.apply(total) * (1 + taxRate);
     }
 
     public void markAsPaid(){
@@ -72,7 +74,9 @@ public class Order {
             return this;
         }
         public Order build(){
-            // TODO: validate customerName
+            if (customerName == null || customerName.isBlank()) {
+                throw new IllegalArgumentException("Customer name is required");
+            }
             return new Order(this);
         }
     }

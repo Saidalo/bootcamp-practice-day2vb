@@ -8,6 +8,8 @@ import org.example.payment.PaymentMethod;
 import org.example.payment.PaymentMethodFactory;
 import org.example.payment.PaymentProcessor;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 public class ConsoleMenu {
@@ -15,6 +17,7 @@ public class ConsoleMenu {
     private final PaymentProcessor paymentProcessor = new PaymentProcessor();
 
     private Order currentOrder;
+    private final List<Order> completedOrders = new ArrayList<>();
 
     public void start(){
         AppConfig config = AppConfig.getInstance();
@@ -41,10 +44,14 @@ public class ConsoleMenu {
         System.out.println("Customer name:");
         String customerName = scanner.nextLine();
 
-        currentOrder = Order.builder()
-                .customerName(customerName)
-                .build();
-        System.out.println("Order created for " + customerName);
+        try {
+            currentOrder = Order.builder()
+                    .customerName(customerName)
+                    .build();
+            System.out.println("Order created for " + customerName);
+        } catch (IllegalArgumentException e) {
+            System.out.println(e.getMessage());
+        }
     }
 
     private void addItem(){
@@ -94,6 +101,7 @@ public class ConsoleMenu {
                 1. Credit Card
                 2. PayPal
                 3. Gift Card
+                4. Bank Transfer
                 """);
         int option = Integer.parseInt(scanner.nextLine());
 
@@ -101,11 +109,15 @@ public class ConsoleMenu {
             case 1 -> createCreditCardPayment();
             case 2 -> createPaypalPayment();
             case 3 -> createGiftCardPayment();
+            case 4 -> createBankTransferPayment();
             default -> throw new IllegalArgumentException("Invalid payment method");
         };
 
         PaymentResult result = paymentProcessor.process(currentOrder, paymentMethod);
         System.out.println(result.getMessage());
+        if (result.isSuccessful()) {
+            completedOrders.add(currentOrder);
+        }
     }
 
     private PaymentMethod createCreditCardPayment(){
@@ -118,19 +130,28 @@ public class ConsoleMenu {
         return PaymentMethodFactory.createCreditCardPayment(cardNumber,cardHolderName);
     }
 
-    private  PaymentMethod createPaypalPayment(){
+    private  PaymentMethod createPaypalPayment() {
         System.out.println("PayPal login:");
         String payPalAcc =  scanner.nextLine();
         return PaymentMethodFactory.createPaypalPayment(payPalAcc);
     }
 
-    private PaymentMethod createGiftCardPayment(){
+    private PaymentMethod createGiftCardPayment() {
         System.out.println("GiftCard code:");
         String code =  scanner.nextLine();
 
         System.out.println("Card balance:");
         String balance =  scanner.nextLine();
         return PaymentMethodFactory.createGiftCardPayment(code, Double.parseDouble(balance));
+    }
+
+    private PaymentMethod createBankTransferPayment() {
+        System.out.println("Iban:");
+        String iban =  scanner.nextLine();
+
+        System.out.println("Account owner:");
+        String accName =  scanner.nextLine();
+        return PaymentMethodFactory.createBankTransferPayment(iban, accName);
     }
 
     private void printMenu(){
